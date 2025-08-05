@@ -32,12 +32,6 @@ pipeline {
             }
         }
 
-        stage("Trivy Security Scan") {
-            steps {
-                echo 'Trivy Security Scan complete'
-            }
-        }
-
         stage("Push to DockerHub") {
             steps {
                 withCredentials([usernamePassword(credentialsId: 'dhc', passwordVariable: 'dockerPass', usernameVariable: 'dockerUser')]) {
