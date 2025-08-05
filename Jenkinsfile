@@ -34,10 +34,12 @@ pipeline {
 
         stage("Push to DockerHub") {
             steps {
-                withCredentials([usernamePassword(credentialsId: 'dhc', passwordVariable: 'dockerPass', usernameVariable: 'dockerUser')]) {
-                    sh "docker login -u ${dockerUser} -p ${dockerPass}"
-                    sh "docker tag ${DOCKER_IMAGE} ${dockerUser}/el-t2-node-app:latest"
-                    sh "docker push ${dockerUser}/el-t2-node-app:latest"
+                withCredentials([usernamePassword(credentialsId: 'dhc', passwordVariable: 'DOCKER_PASS', usernameVariable: 'DOCKER_USER')]) {
+                    sh '''
+                        echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin
+                        docker tag ${DOCKER_IMAGE} $DOCKER_USER/el-t2-node-app:latest
+                        docker push $DOCKER_USER/el-t2-node-app:latest
+                    '''
                 }
                 echo 'Push successful'
             }
