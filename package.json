@@ -1,0 +1,16 @@
+{
+  "name": "el-t1-node-app",
+  "version": "1.0.0",
+  "description": "Node.js app for Elevate Labs DevOps Internship Task 1 – Automated CI/CD deployment",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node src/index.js",
+    "test": "echo \"No real tests yet – you can add tests using Mocha/Jest/etc.\" && exit 0"
+  },
+  "keywords": ["devops", "nodejs", "express", "ci-cd", "docker"],
+  "author": "Harshil Kumar",
+  "license": "MIT",
+  "dependencies": {
+    "express": "^4.18.2"
+  }
+}
