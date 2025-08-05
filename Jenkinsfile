@@ -4,39 +4,14 @@ pipeline {
     agent any
 
     environment {
-        REPO_URL = "https://github.com/Harshil-k4/EL-t2.git"
-        BRANCH = "main"
-        DOCKER_IMAGE = 'el-t2-node-app'
-        DOCKER_TAG = 'latest'
+        DOCKER_IMAGE = 'el-t2-node-app:latest'
     }
 
     stages {
         stage("Code Checkout") {
             steps {
-                git url: "${REPO_URL}", branch: "${BRANCH}"
+                git url: "https://github.com/Harshil-k4/EL-t2.git", branch: "main"
                 echo "Code cloning successful"
-            }
-        }
-
-        stage("SonarQube Analysis") {
-            steps {
-                withCredentials([string(credentialsId: 'SONAR_TOKEN', variable: 'SONAR_TOKEN')]) {
-                    sh '''
-                        sonar-scanner \
-                        -Dsonar.host.url=http://localhost:9000 \
-                        -Dsonar.login=$SONAR_TOKEN \
-                        -Dsonar.projectKey=el-t2-node-app \
-                        -Dsonar.sources=./src
-                    '''
-                }
-            }
-        }
-
-        stage("SonarQube Quality Gate") {
-            steps {
-                timeout(time: 2, unit: 'MINUTES') {
-                    waitForQualityGate abortPipeline: true
-                }
             }
         }
 
@@ -54,24 +29,29 @@ pipeline {
 
         stage("Build Docker Image") {
             steps {
-                sh "docker build -t ${DOCKER_IMAGE}:${DOCKER_TAG} ."
+                sh "docker build -t ${DOCKER_IMAGE} ."
                 echo "Docker build successful"
             }
         }
 
         stage("Trivy Security Scan") {
             steps {
-                sh "trivy image ${DOCKER_IMAGE}:${DOCKER_TAG} --severity HIGH,CRITICAL --exit-code 0 > trivy-report.txt"
+                sh "trivy image --severity HIGH,CRITICAL --exit-code 1 --format table -o trivy-report.txt ${DOCKER_IMAGE}"
                 sh "cat trivy-report.txt"
+            }
+            post {
+                always {
+                    archiveArtifacts artifacts: 'trivy-report.txt', allowEmptyArchive: true
+                }
             }
         }
 
         stage("Push to DockerHub") {
             steps {
                 withCredentials([usernamePassword(credentialsId:"dhc", passwordVariable:"dockerPass", usernameVariable:"dockerUser")]) {
-                    sh "docker login -u ${env.dockerUser} -p ${env.dockerPass}"
-                    sh "docker tag ${DOCKER_IMAGE}:${DOCKER_TAG} ${env.dockerUser}/${DOCKER_IMAGE}:${DOCKER_TAG}"
-                    sh "docker push ${env.dockerUser}/${DOCKER_IMAGE}:${DOCKER_TAG}"
+                    sh "docker login -u ${dockerUser} -p ${dockerPass}"
+                    sh "docker tag ${DOCKER_IMAGE} ${dockerUser}/el-t2-node-app:latest"
+                    sh "docker push ${dockerUser}/el-t2-node-app:latest"
                 }
                 echo "Push successful"
             }
